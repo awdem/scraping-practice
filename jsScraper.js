@@ -34,7 +34,7 @@ const main = async () => {
 	await get_page(page, start_url)
 	// closes the browser
 	await browser.close()
-	console.log(quotes_list)
+	// console.log(quotes_list)
 }
 
 // goes to the url, scrapes the HTML output, and moves to the next page
@@ -54,6 +54,7 @@ const get_page = async (page, url) => {
 		await get_page(page, next_url)
 	} catch {
 		console.log('No next page, end job');
+		write_to_csv()
 		return;
 	}
 }
@@ -79,6 +80,23 @@ const scrape = async (page) => {
 		// stores the quote object in the quotes_list
 		quotes_list.push(quote)
 	}
+}
+
+const write_to_csv = () => {
+	csv = Object.keys(quotes_list[0]).join(',') + '\n'
+
+	quotes_list.forEach((quote) => {
+		csv += `${quote.text},${quote.author},"${quote.tags}"\n`
+	}) // notice the "" around quote.tags to combine the array
+
+	fs.writeFile('quotes.csv', csv, (err) => {
+		if (err) 
+			console.log(err)
+		else {
+			console.log('File written!')
+		}
+	})
+
 }
 
 main()
