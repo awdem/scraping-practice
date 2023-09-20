@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer')
 const fs = require('fs')
+const { secureHeapUsed } = require('crypto')
 
 const start_url = 'http://quotes.toscrape.com/js/'
 //const start_url = 'http://quotes.toscrape.com/js-delayed/'
@@ -23,6 +24,8 @@ const prepare_browser = async () => {
 	return browser;
 }
 
+// the main function of the script
+
 const main = async () => {
 	const browser = await prepare_browser()
 	// opens a page in the browser
@@ -32,6 +35,27 @@ const main = async () => {
 	// closes the browser
 	await browser.close()
 	console.log(quotes_list)
+}
+
+// goes to the url, scrapes the HTML output, and moves to the next page
+
+const get_page = async (page, url) => {
+	await page.goto(url)
+	// waits for a quote element to appear, with a timeout of 20 seconds
+	await page.waitForSelector(quote_elem_selector, {timeout: 20_000})
+	// scrapes the page for quotes
+	await scrape(page)
+	// checks for a next page selector and extracts the href to scrape it
+	try {
+		let next_href = await page.$eval(next_page_selector, el => el.getAttribute('href'))
+		let next_url = 'http://quotes.toscrape.com' + next_href
+		console.log('Next URL to scrape: ' + next_url)
+		// recursion to get and scrape next page of quotes
+		await get_page(page, next_url)
+	} catch {
+		console.log('No next page, end job');
+		return;
+	}
 }
 
 
