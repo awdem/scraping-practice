@@ -6,6 +6,7 @@ const fs = require('fs');
 const start_url = "http://books.toscrape.com/";
 // list to store data
 const books_list = [];
+
 // tutorial scrape function
 const scrape = async (url) => {
 	// HTTP request to url
@@ -14,7 +15,6 @@ const scrape = async (url) => {
 	let resp_html = resp.data;
 	// uses cheerio to parse HTML
 	const $ = load(resp_html);
-	// parse function needs to be written
 	parse($)
 	// Finds the next page selector and takes it's href attribute
 	try {
@@ -29,10 +29,12 @@ const scrape = async (url) => {
 		console.log('Scrape: ' + next_url);
 		await scrape(next_url);
 	} catch {
-		// Next page selector not found, end job
+		console.log("Next page selector not found, end job")
 		return
 	}
 }
+
+// the parse function uses CSS selector syntax to find and extract data from the elements we're targeting
 
 const parse = ($) => {
 	// finds all product pod html elements in the page
@@ -59,4 +61,29 @@ const parse = ($) => {
 	// console.log(books_list);
 };
 
-scrape(start_url);
+// write_to_csv uses the gathered data in books_lists to create a csv file
+
+const write_to_csv = (books_list) => {
+	// creates the first line of the csv file by reading the keys from books_list's first object and putting them in CSV format.
+	let csv = Object.keys(books_list[0]).join(", ") + '\n';
+	// iterates through the books_list array and puts each object's data in CSV format
+	books_list.forEach((book) => {
+		csv += `"${book['title']}", ${book['price']}, ${book['rating']}, ${book['stock']}, ${book['url']},\n`
+	})
+	// creates the output csv file
+	fs.writeFile('output.csv', csv, (err) => {
+		if (err)
+			console.log(err);
+		else {
+			console.log('Output written successfully to output.csv')
+		}
+	})
+}
+
+
+// this script runs the scrape function and writes the data to a csv file
+
+(async () => {
+	await scrape(start_url);
+	write_to_csv(books_list);
+})();
