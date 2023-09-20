@@ -15,7 +15,7 @@ const scrape = async (url) => {
 	// uses cheerio to parse HTML
 	const $ = load(resp_html);
 	// parse function needs to be written
-	// parse($)
+	parse($)
 	// Finds the next page selector and takes it's href attribute
 	try {
 		// finds the correct next page button html element and takes it's href attribute
@@ -33,5 +33,30 @@ const scrape = async (url) => {
 		return
 	}
 }
+
+const parse = ($) => {
+	// finds all product pod html elements in the page
+	$('.product_pod').each((i, elem) => {
+		// finds element with book title
+		const book_title = $(elem).find('h3').text();
+		// finds element with book price and removes the pound sign
+		const book_price = $(elem).find('.price_color').text().replace('£', '');
+		// finds the star-rating element, takes it's full class name (e.g. star-rating Three), splits it into two words and takes the 2nd word (the rating)
+		const book_rating = $(elem).find('p.star-rating').attr("class").split(' ')[1];
+		// finds the element with book stock, takes its text and trims the whitespaces
+		const book_stock = $(elem).find('.instock').text().trim();
+		// finds book link element (<a>), takes its href attribute, and appends it to the start url
+		const book_url = start_url + $(elem).find('a').attr('href');
+		// creates an object to store the data and adds it the books_list array
+		books_list.push({
+      "title": book_title,
+      "price": book_price,
+      "rating": book_rating,
+      "stock": book_stock,
+      "url": book_url
+    });
+	})
+	// console.log(books_list);
+};
 
 scrape(start_url);
