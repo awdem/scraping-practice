@@ -9,7 +9,7 @@ const start_url = 'http://quotes.toscrape.com/js/'
 const quote_elem_selector = '.quote'
 const quote_text_selector = '.text'
 const quote_author_selector = '.author'
-const quote_tag_selector = '.tag'
+const quote_tags_selector = '.tag'
 const next_page_selector = '.next > a'
 
 const quotes_list = []
@@ -58,6 +58,27 @@ const get_page = async (page, url) => {
 	}
 }
 
+const scrape = async (page) => {
+	// finds all quote elements in the page and creates an array of them
+	let quote_elements = await page.$$(quote_elem_selector)
+	// for each quote element, scrapes their data and stores it in the quotes_list
+	for (let quote_element of quote_elements) {
+		let quote_text = await quote_element.$eval(quote_text_selector, el => el.innerText)
+		let quote_author = await quote_element.$eval(quote_author_selector, el => el.innerText)
+		// finds all tags elements (note the $$eval) and maps them to their text content
+		let quote_tags = await quote_element.$$eval(quote_tags_selector, els => els.map(el => el.textContent))
+		// console.log(quote_text)
+		// console.log(quote_author)
+		// console.log(quote_tags)
+		// creates a quote object
+		quote = {
+			'text': quote_text,
+			'author': quote_author,
+			'tags': quote_tags,
+		}
+		// stores the quote object in the quotes_list
+		quotes_list.push(quote)
+	}
+}
 
-
-// main()
+main()
